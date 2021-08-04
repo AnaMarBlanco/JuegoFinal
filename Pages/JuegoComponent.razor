@@ -1,5 +1,6 @@
 ﻿@page "/juego"
 @using System.Timers
+@using JuegoFinal.Entidades
 
 <h3>JuegoComponent</h3>
 
@@ -19,10 +20,21 @@
 
 <div class="container">
     <div class="row">
-        @for (var animalNumber = 0; animalNumber < shuffledAnimals.Count; animalNumber++)
+        <label>Cliente </label>
+        <select class="form-control" value="dificultadId" @onchange="prepareMatch" >
+            @foreach (var item in listaDificultades)
+            {
+                <option value="@item.DificultadId">@item.Descripcion</option>
+            }
+        </select>
+    </div>
+
+    <div class="row">
+        @for (var animalNumber = 0; animalNumber < ((listaDificultades[dificultadId-1].Coincidencias)*2)-1; animalNumber++)
         {
-            var animal = shuffledAnimals[animalNumber];
+            var animal = listaDificultades[dificultadId-1].animalList[animalNumber-1];
             var uniqueDescription = $"Button #{animalNumber}";
+            var myAnimaList = listaDificultades[dificultadId - 1].animalList;
             <div class="col-3">
                 <button @onclick="@(() => ButtonClick(animal, uniqueDescription))"
                         type="button" class="btn btn-outline-dark">
@@ -38,9 +50,8 @@
     </div>
 </div>
 
-@code {
-    List<string> animalEmoji = new List<string>()
-{
+    @code {
+        static List<string> animalEmoji { get; set; } = new List<string>(){
         "🐶","🐶",
         "🐺","🐺",
         "🐮","🐮",
@@ -49,80 +60,136 @@
         "🦁","🦁",
         "🐯","🐯",
         "🐹","🐹",
+        "🐵","🐵",
+        "🐷","🐷"
     };
+        int dificultadId =4;
 
-    List<string> shuffledAnimals = new List<string>();
-    int matchesFound = 0;
-    Timer timer;
-    int tenthsOfSecondsElapsed = 0;
-    string timeDisplay;
 
-    protected override void OnInitialized()
-    {
-        timer = new Timer(100);
-        timer.Elapsed += Timer_Tick;
-
-        SetUpGame();
-    }
-
-    private void SetUpGame()
-    {
-        Random random = new Random();
-        shuffledAnimals = animalEmoji
-            .OrderBy(item => random.Next())
-            .ToList();
-        matchesFound = 0;
-        tenthsOfSecondsElapsed = 0;
-    }
-
-    string lastAnimalFound = string.Empty;
-    string lastDescription = string.Empty;
-
-    private void ButtonClick(string animal, string animalDescription)
-    {
-        if (lastAnimalFound == string.Empty)
+        public static List<String> generarDificultades(int coincidencias)
         {
-            // First selection of the pair. Remember it.
-            lastAnimalFound = animal;
-            lastDescription = animalDescription;
-
-            timer.Start();
-        }
-        else if ((lastAnimalFound == animal) && (animalDescription != lastDescription))
-        {
-            // Match found! Reset for next pair.
-            lastAnimalFound = string.Empty;
-
-            // Replace found animals with empty string to hide them.
-            shuffledAnimals = shuffledAnimals
-                .Select(a => a.Replace(animal, string.Empty))
-                .ToList();
-
-            matchesFound++;
-            if (matchesFound == 8)
+            List<string> dificultades = new List<string>();
+            for (int i = 0; i < coincidencias * 2; i++)
             {
-                timer.Stop();
-                timeDisplay += " - Play Again?";
+                dificultades.Add(animalEmoji[i]);
+            }
+            return dificultades;
 
-                SetUpGame();
+        }
+
+        static List<Dificultades> listaDificultades { get; set; } = new List<Dificultades>() {
+                 new Dificultades()
+                 {
+                     DificultadId = 1,
+                     Descripcion = "facil",
+                     Coincidencias = 2,
+                     animalList = generarDificultades(2)
+                 },
+                new Dificultades()
+                {
+                    DificultadId = 2,
+                    Descripcion = "Medio",
+                    Coincidencias = 3,
+                    animalList = generarDificultades(3)
+                },
+                new Dificultades()
+                {
+                    DificultadId = 3,
+                    Descripcion = "Dificil",
+                    Coincidencias = 4,
+                    animalList = generarDificultades(4)
+                },
+                new Dificultades()
+                {
+                    DificultadId = 4,
+                    Descripcion = "Extrema",
+                    Coincidencias = 5,
+                    animalList = generarDificultades(5)
+                }
+        };
+
+
+        List<string> shuffledAnimals = new List<string>();
+        int matchesFound = 0;
+        Timer timer;
+        int tenthsOfSecondsElapsed = 0;
+        string timeDisplay;
+
+        void prepareMatch()
+        {
+            //addDificultades();
+            timer = new Timer(100);
+            timer.Elapsed += Timer_Tick;
+            SetUpGame(dificultadId - 1);
+        }
+        protected override void OnInitialized()
+        {
+            //addDificultades();
+            timer = new Timer(100);
+            timer.Elapsed += Timer_Tick;
+
+
+            SetUpGame(dificultadId-1);
+        }
+
+        private void SetUpGame(int number)
+        {
+            Random random = new Random();
+            listaDificultades[dificultadId - 1].animalList = listaDificultades[number - 1].animalList
+                .OrderBy(item => random.Next())
+                .ToList();
+            matchesFound = 0;
+            tenthsOfSecondsElapsed = 0;
+        }
+
+        string lastAnimalFound = string.Empty;
+        string lastDescription = string.Empty;
+
+        private void ButtonClick(string animal, string animalDescription)
+        {
+            if (lastAnimalFound == string.Empty)
+            {
+                // First selection of the pair. Remember it.
+                lastAnimalFound = animal;
+                lastDescription = animalDescription;
+
+                timer.Start();
+            }
+            else if ((lastAnimalFound == animal) && (animalDescription != lastDescription))
+            {
+                // Match found! Reset for next pair.
+                lastAnimalFound = string.Empty;
+
+                // Replace found animals with empty string to hide them.
+                listaDificultades[dificultadId - 1].animalList = listaDificultades[dificultadId - 1].animalList
+                    .Select(a => a.Replace(animal, string.Empty))
+                    .ToList();
+
+                matchesFound++;
+                if (matchesFound == animalEmoji.Count)
+                {
+                    timer.Stop();
+                    timeDisplay += " - Play Again?";
+
+                    SetUpGame(dificultadId - 1);
+                }
+            }
+            else
+            {
+                // User selected a pair that don't match.
+                // Reset selection.
+                lastAnimalFound = string.Empty;
             }
         }
-        else
+
+        private void Timer_Tick(Object source, ElapsedEventArgs e)
         {
-            // User selected a pair that don't match.
-            // Reset selection.
-            lastAnimalFound = string.Empty;
+            InvokeAsync(() =>
+            {
+                tenthsOfSecondsElapsed++;
+                timeDisplay = (tenthsOfSecondsElapsed / 10F)
+                    .ToString("0.0s");
+                StateHasChanged();
+            });
         }
     }
-
-    private void Timer_Tick(Object source, ElapsedEventArgs e)
-    {
-        InvokeAsync(() =>
-        {
-            tenthsOfSecondsElapsed++;
-            timeDisplay = (tenthsOfSecondsElapsed / 10F)
-                .ToString("0.0s");
-            StateHasChanged();
-        });
-    }
-}

@@ -49,7 +49,10 @@ namespace JuegoFinal
 
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            
+            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<Usuarios>>();
+            services.AddDatabaseDeveloperPageExceptionFilter();
+            services.AddBlazoredToast();//Toast
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
